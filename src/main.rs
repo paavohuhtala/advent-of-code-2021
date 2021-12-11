@@ -1,7 +1,10 @@
+mod array2d;
 mod util;
 
 #[allow(dead_code)]
 mod day1;
+#[allow(dead_code)]
+mod day10;
 #[allow(dead_code)]
 mod day2;
 #[allow(dead_code)]
@@ -19,9 +22,9 @@ mod day8;
 #[allow(dead_code)]
 mod day9;
 
-mod day10;
+mod day11;
 
 fn main() {
-    day10::a();
-    day10::b();
+    day11::a();
+    day11::b();
 }
