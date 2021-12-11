@@ -48,38 +48,36 @@ enum ParseResult<T> {
 
 fn parse(
     tokens: &mut VecDeque<Token>,
-    i: &mut usize,
-    line: usize,
+    completion: &mut Option<Vec<ChunkType>>,
 ) -> ParseResult<Option<Expression>> {
     let next = tokens.front().copied();
     let next = match next {
         Some(t) => t,
         None => return ParseResult::Valid(None),
     };
-    // println!("Peeked at token: {:?}", next);
-    *i += 1;
 
     match next {
         Token::R(_) => return ParseResult::Valid(None),
         Token::L(open_type) => {
-            let _popped = tokens.pop_front().unwrap();
-            // println!("Popped start token {:?}", popped);
+            tokens.pop_front().unwrap();
 
             let mut expressions = Vec::new();
 
             loop {
-                let inner = parse(tokens, i, line);
+                let inner = parse(tokens, completion);
 
                 match inner {
                     ParseResult::Valid(Some(expr)) => expressions.push(expr),
-                    ParseResult::Valid(None) => {
-                        break;
-                    }
-                    ParseResult::Incomplete => {
-                        return ParseResult::Incomplete;
-                    }
+                    ParseResult::Valid(None) => {}
                     ParseResult::Corrupted(ch) => {
                         return ParseResult::Corrupted(ch);
+                    }
+                    ParseResult::Incomplete => {
+                        if let Some(completion) = completion {
+                            completion.push(open_type);
+                        }
+
+                        return ParseResult::Incomplete;
                     }
                 }
 
@@ -93,55 +91,34 @@ fn parse(
                     }
                     Some(Token::L(_)) => {}
                     None => {
-                        break;
+                        if let Some(completion) = completion {
+                            completion.push(open_type);
+                        }
+
+                        return ParseResult::Incomplete;
                     }
                 }
             }
 
-            while let ParseResult::Valid(Some(expr)) = parse(tokens, i, line) {
-                expressions.push(expr);
-            }
+            tokens.pop_front().unwrap();
 
-            // println!("subtree {:?}", expressions);
-
-            let end_token = tokens.pop_front();
-            // println!("Popped end token {:?}", end_token);
-            *i += 1;
-
-            match end_token {
-                Some(Token::R(close_type)) => {
-                    if close_type != open_type {
-                        ParseResult::Corrupted(close_type)
-                    } else {
-                        ParseResult::Valid(Some(Expression::Chunk(open_type, expressions)))
-                    }
-                }
-                Some(token) => {
-                    panic!(
-                        "unexpected token {:?} at {}:{}, expected closing chunk of type {:?}",
-                        token, line, i, open_type
-                    );
-                }
-                None => return ParseResult::Incomplete,
-            }
+            ParseResult::Valid(Some(Expression::Chunk(open_type, expressions)))
         }
     }
 }
 
-fn parse_line(line: &str, line_number: usize) -> ParseResult<Vec<Expression>> {
+fn parse_line(line: &str, completion: &mut Option<Vec<ChunkType>>) -> ParseResult<Vec<Expression>> {
     let mut tokens = VecDeque::from(lex(line));
-    let mut i = 0;
-
     let mut expressions: Vec<Expression> = Vec::new();
 
-    println!("{}", line);
-
     loop {
-        let next = parse(&mut tokens, &mut i, line_number);
+        let next = parse(&mut tokens, completion);
         match next {
             ParseResult::Valid(Some(expr)) => expressions.push(expr),
             ParseResult::Valid(None) => break,
-            ParseResult::Incomplete => return ParseResult::Incomplete,
+            ParseResult::Incomplete => {
+                return ParseResult::Incomplete;
+            }
             ParseResult::Corrupted(ch) => {
                 return ParseResult::Corrupted(ch);
             }
@@ -158,8 +135,8 @@ fn parse_line(line: &str, line_number: usize) -> ParseResult<Vec<Expression>> {
 pub fn a() {
     let mut score = 0;
 
-    for (line_number, line) in INPUT.lines().enumerate() {
-        let parsed = parse_line(line, line_number);
+    for line in INPUT.lines() {
+        let parsed = parse_line(line, &mut None);
         let value = match parsed {
             ParseResult::Corrupted(ChunkType::Paren) => 3,
             ParseResult::Corrupted(ChunkType::Bracket) => 57,
@@ -169,9 +146,44 @@ pub fn a() {
         };
 
         score += value;
-
-        println!("{:?}", parsed);
     }
 
-    println!("score: {}", score);
+    println!("Day10a: {}", score);
+}
+
+fn score_completion(completion: &[ChunkType]) -> usize {
+    let mut score = 0;
+
+    for ch in completion.iter().copied() {
+        score *= 5;
+
+        score += match ch {
+            ChunkType::Paren => 1,
+            ChunkType::Bracket => 2,
+            ChunkType::Brace => 3,
+            ChunkType::Angle => 4,
+        };
+    }
+
+    score
+}
+
+pub fn b() {
+    let mut scores = Vec::new();
+
+    for line in INPUT.lines() {
+        let mut completion = Some(Vec::new());
+        parse_line(line, &mut completion);
+        let value = score_completion(completion.as_ref().unwrap());
+
+        if value > 0 {
+            scores.push(value);
+        }
+    }
+
+    scores.sort_unstable();
+
+    let middle_score = scores[scores.len() / 2];
+
+    println!("Day10b: {}", middle_score);
 }

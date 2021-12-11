@@ -23,4 +23,5 @@ mod day10;
 
 fn main() {
     day10::a();
+    day10::b();
 }
