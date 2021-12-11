@@ -14,9 +14,11 @@ mod day5;
 mod day6;
 #[allow(dead_code)]
 mod day7;
+#[allow(dead_code)]
 mod day8;
 
+mod day10;
+
 fn main() {
-    day8::a();
-    day8::b();
+    day10::a();
 }
