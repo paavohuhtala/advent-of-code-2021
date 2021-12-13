@@ -8,6 +8,8 @@ mod day10;
 #[allow(dead_code)]
 mod day11;
 #[allow(dead_code)]
+mod day12;
+#[allow(dead_code)]
 mod day2;
 #[allow(dead_code)]
 mod day3;
@@ -24,9 +26,9 @@ mod day8;
 #[allow(dead_code)]
 mod day9;
 
-mod day12;
+mod day13;
 
 fn main() {
-    day12::a();
-    day12::b();
+    day13::a();
+    day13::b();
 }
