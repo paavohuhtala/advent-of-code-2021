@@ -72,6 +72,22 @@ where
         }
     }
 
+    pub fn adjacent_cardinal(&self, i: usize, adjacent: &mut Vec<(usize, T)>) {
+        let (x, y) = self.i_to_coords(i);
+
+        for neighbor in [
+            self.try_get_with_i(x - 1, y),
+            self.try_get_with_i(x + 1, y),
+            self.try_get_with_i(x, y - 1),
+            self.try_get_with_i(x, y + 1),
+        ]
+        .into_iter()
+        .filter_map(|x| x)
+        {
+            adjacent.push(neighbor);
+        }
+    }
+
     pub fn map<B>(&self, f: impl Fn(T) -> B) -> Array2D<B> {
         let mut new_data = Vec::with_capacity(self.data.len());
         for elem in self.data.iter() {
@@ -82,6 +98,12 @@ where
             width: self.width,
             height: self.height,
         }
+    }
+
+    pub fn from_vec_vec(s: Vec<Vec<T>>) -> Self {
+        let rows = s.len();
+        let data = s.into_iter().flatten().collect();
+        Array2D::from_data_and_rows(data, rows)
     }
 }
 
@@ -99,5 +121,14 @@ impl Array2D<u8> {
             .collect_vec();
 
         Array2D::from_data_and_rows(data, rows)
+    }
+}
+
+pub fn print_array2d(a: &Array2D<u8>) {
+    for y in 0..a.height {
+        for x in 0..a.width {
+            print!("{}", a.get(x as i32, y as i32));
+        }
+        println!();
     }
 }

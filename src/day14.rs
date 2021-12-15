@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use itertools::Itertools;
 
 const INPUT: &str = include_str!("./day14.txt");
