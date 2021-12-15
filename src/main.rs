@@ -31,5 +31,5 @@ mod day9;
 mod day14;
 
 fn main() {
-    day14::b();
+    day14::ab();
 }
